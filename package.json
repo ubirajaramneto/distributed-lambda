@@ -1,0 +1,20 @@
+{
+  "name": "distributed-lambda",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test&clear": "clear && mocha",
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aguid": "^2.0.0",
+    "bluebird": "^3.4.7"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0"
+  }
+}
