@@ -7,16 +7,25 @@ const fs = Promise.promisifyAll(require("fs"));
 
 
 function executeLambda(lambda, cb) {
-  let exec = fork(`./bucket/${aguid(lambda)}`)
-  
-  exec.stdout.on('data', (data) => {
+  let lambdaString = _prepareLambda(lambda)
+  let lambda64 = Buffer.from(lambdaString.toString(), 'base64')
+  let exec = fork(`./bucket/${aguid(lambda64.toString("base64"))}.js`, [], {
+    silent: true
+  })
+
+  exec.on('message', (m) => {
     console.log('******* INFO > Lambda execution output: *******')
-    console.log(data)
+    console.log(m)
+  })
+
+  exec.stdout.on('data', (data) => {
+    console.log('******* LOG > Lambda execution log: *******')
+    console.log(data.toString())
   })
 
   exec.on('close', (code) => {
     console.log(`******* INFO > Lambda exited with code: ${code} *******`)
-    cb(null)
+    cb(null, code)
   })
 
   exec.on('error', (err) => {
@@ -31,8 +40,10 @@ function executeLambda(lambda, cb) {
 // and store it somewhere in the file system we can execute.
 function receiveLambda(lambda, cb) {
   // store the lambda into the bucket folder
-  let lambda64 = Buffer.from(lambda.toString(), 'base64')
-  fs.writeFileAsync(`bucket/${aguid(lambda64.toString("base64"))}.js`, lambda)
+  console.log(lambda.toString())
+  let lambdaString = _prepareLambda(lambda)
+  let lambda64 = Buffer.from(lambdaString.toString(), 'base64')
+  fs.writeFileAsync(`bucket/${aguid(lambda64.toString("base64"))}.js`, lambdaString)
   .then(() => {
     console.log(`******* INFO > Lambda saved at bucket: ${aguid(lambda64.toString("base64"))} *******`)
     cb(null, null)
@@ -41,6 +52,12 @@ function receiveLambda(lambda, cb) {
     console.log('******* ERROR > Lambda write could not be executed *******')
     cb(err)
   })
+}
+
+function _prepareLambda(lambda) {
+  let lambdaString = lambda.toString()
+  lambdaString = lambdaString.slice(lambdaString.indexOf("{") + 1, lambdaString.lastIndexOf("}"))
+  return lambdaString
 }
 
 const Lambda = {

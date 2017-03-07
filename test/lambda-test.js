@@ -6,22 +6,13 @@ const Promise = require('bluebird')
 const fs = Promise.promisifyAll(require("fs"));
 
 describe('Lambda', () => {
+  let lambdy = function lambdy () {
+    process.send("Msg from child")
+    console.log("Some log from child")
+  }
   describe('#receiveLambda', () => {
     it('should save a lambda function and store it in the bucket', (done) => {
-      let lambdaToBeSent = function () {
-        console.log('Hello World!')
-        console.log('Im a Lambda function!')
-        console.log('Im doing some stuff now')
-        console.log('Now im done, bye!')
-      }
-      // console.log(lambdaToBeSent.toString())
-      // console.log(aguid(lambdaToBeSent))
-      // let lambda64 = Buffer.from(lambdaToBeSent.toString(), 'base64')
-      // console.log(lambda64.toString("base64"))
-      // console.log(aguid(lambda64))
-      // assert(true)
-      // done()
-      Lambda.receiveLambda(lambdaToBeSent)
+      Lambda.receiveLambda(lambdy)
       .then(() => {
         return fs.statAsync(`../bucket/${lambdaId}.js`)
       })
@@ -34,4 +25,18 @@ describe('Lambda', () => {
       })
     })
   })
+
+  describe('#executeLambda', () => {
+    it('should execute a lambda function from the bucket', (done) => {
+      Lambda.executeLambda(lambdy)
+      .then((code) => {
+        assert.equal(code, 0)
+        done()
+      })
+      .catch(() => {
+        done()
+      })
+    })
+  })
+
 })
